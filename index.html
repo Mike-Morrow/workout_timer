@@ -146,6 +146,7 @@
             </div>
             
             <button id="startButton">Start Countdown</button>
+            <button id="pauseButton" disabled>Pause</button>
             <button id="resetButton" disabled>Reset</button>
         </div>
         
@@ -176,6 +177,7 @@
             const iterationInput = document.getElementById('iterationInput');
             const completionMessageInput = document.getElementById('completionMessageInput');
             const startButton = document.getElementById('startButton');
+            const pauseButton = document.getElementById('pauseButton');
             const resetButton = document.getElementById('resetButton');
             const statusDisplay = document.getElementById('status');
             const iterationStatus = document.getElementById('iterationStatus');
@@ -187,6 +189,7 @@
             let totalIterations = 10;
             let currentIteration = 0;
             let isRunning = false;
+            let isPaused = false;
             let audioContext;
             
             // Initialize audio context
@@ -250,6 +253,20 @@
             function startCountdown() {
                 if (isRunning) return;
                 
+                // If we're resuming from pause
+                if (isPaused) {
+                    isPaused = false;
+                    isRunning = true;
+                    
+                    startButton.disabled = true;
+                    pauseButton.disabled = false;
+                    
+                    statusDisplay.textContent = 'Countdown in progress...';
+                    runCountdown();
+                    return;
+                }
+                
+                // Starting fresh
                 initialTime = parseInt(timerInput.value, 10);
                 totalIterations = parseInt(iterationInput.value, 10);
                 remainingTime = initialTime;
@@ -257,6 +274,7 @@
                 isRunning = true;
                 
                 startButton.disabled = true;
+                pauseButton.disabled = false;
                 resetButton.disabled = false;
                 timerInput.disabled = true;
                 iterationInput.disabled = true;
@@ -325,7 +343,11 @@
             // Complete all countdown iterations
             function completeCountdown() {
                 isRunning = false;
+                isPaused = false;
+                
+                startButton.textContent = 'Start Countdown';
                 startButton.disabled = false;
+                pauseButton.disabled = true;
                 resetButton.disabled = true;
                 timerInput.disabled = false;
                 iterationInput.disabled = false;
@@ -336,15 +358,33 @@
                 speak(completionMessage);
             }
             
+            // Pause the countdown
+            function pauseCountdown() {
+                if (!isRunning || isPaused) return;
+                
+                clearInterval(countdown);
+                isPaused = true;
+                isRunning = false;
+                
+                startButton.textContent = 'Resume';
+                startButton.disabled = false;
+                pauseButton.disabled = true;
+                
+                statusDisplay.textContent = 'Countdown paused';
+            }
+            
             // Reset the countdown
             function resetCountdown() {
                 clearInterval(countdown);
                 isRunning = false;
+                isPaused = false;
                 
                 remainingTime = parseInt(timerInput.value, 10);
                 currentIteration = 0;
                 
+                startButton.textContent = 'Start Countdown';
                 startButton.disabled = false;
+                pauseButton.disabled = true;
                 resetButton.disabled = true;
                 timerInput.disabled = false;
                 iterationInput.disabled = false;
@@ -358,6 +398,7 @@
             
             // Event listeners
             startButton.addEventListener('click', startCountdown);
+            pauseButton.addEventListener('click', pauseCountdown);
             resetButton.addEventListener('click', resetCountdown);
             
             timerInput.addEventListener('change', () => {
